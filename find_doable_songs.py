@@ -46,7 +46,7 @@ print('Available group members: '+", ".join(list(all_name_set-set(missing_people
 
 song_delete_list=[]
 num_songs_needed=10
-break_list=[]
+break_list=[3,7]
 song_delete_list=[w.lower() for w in song_delete_list]
 
 for index, person in enumerate(missing_people):
@@ -377,7 +377,16 @@ if set_list is None:
 else:
     print('ordering successful!')
     set_list.reverse()
-    ordered_output_list=[output_lookup_good[song.name] for song in set_list]
+    ordered_output_list=[]
+    for index, song in enumerate(set_list):
+        row=output_lookup_good[song.name]
+        row[0]=index+1
+        ordered_output_list.append(row)
+        if index+1 in break_list:
+            break_row=[]
+            for element in row:
+                break_row.append('---')
+            ordered_output_list.append(break_row)
 
     
     
