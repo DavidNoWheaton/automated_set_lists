@@ -45,7 +45,7 @@ while failed==1:
 print('Available group members: '+", ".join(list(all_name_set-set(missing_people))))
 
 song_delete_list=[]
-num_songs_needed=10
+num_songs_needed=8
 break_list=[3,7]
 song_delete_list=[w.lower() for w in song_delete_list]
 
@@ -378,27 +378,51 @@ else:
     print('ordering successful!')
     set_list.reverse()
     ordered_output_list=[]
-    for index, song in enumerate(set_list):
+    index=1
+    for song in set_list:
         row=output_lookup_good[song.name]
-        row[0]=index+1
+        row[0]=index
         ordered_output_list.append(row)
-        if index+1 in break_list:
+        index+=1
+        if index in break_list:
+            
             break_row=[]
             for element in row:
                 break_row.append('---')
+            break_row[1]='[break]'
+            break_row[0]=index
             ordered_output_list.append(break_row)
-
-    
-    
-  
-# for song in good_songs:
-#     print('\n\n\n',song.name)
-#     print([s.name for s in song.eligible_next_songs])
+            index+=1
             
 
 
-
+# =============================================================================
+# Add back in the songs that aren't in the ordered set list, but could be used
+# =============================================================================
+if len(good_songs)>num_songs_needed:
+    
+    used_set=set()
+    break_row=[]
+    for element in ordered_output_list[0]:
+        break_row.append('---')
+    break_row[1]='[end of set]'
+    break_row[0]=index
+    ordered_output_list.append(break_row)
+    index+=1
+    for song in ordered_output_list:
+        print(song[1])
+        used_set.add(song[1])
         
+    for song in output_list_good:
+        if song[1] not in used_set:
+            song[0]=index
+            ordered_output_list.append(song)
+            index+=1
+            
+            
+        
+    
+
 
 print()        
         
