@@ -30,8 +30,7 @@ print('ran this')
 while failed==1:
     failed=0
     print('while')
-    missing_people_str=input("Please provide a list of missing members:")
-    # missing_people_str="jason, ellie"  
+    missing_people_str="jason, ellie"  
     print(missing_people_str)
     print('got here')
     missing_people=[i for i in missing_people_str.split(', ') if len(i)>0]
@@ -396,57 +395,8 @@ print()
         
 print('Available Songs (',len(good_song_names),' total):',good_song_names)   
 print('Unavailable Songs (',len(bad_songs),' total):',bad_songs)        
-for element in ['year','month','day']:
-    failed=1
-    while failed==1:
-        failed=0
-        res=input('Please enter the gig '+element+' as a number:')
-        if res.isnumeric()==0:
-            print('Please enter a number')
-            failed=1
-        elif '.' in res:
-            print('Please do not enter a decimal')
-            failed=1
-        else:
-            try:
-                res_int=int(res)
-                
-            except ValueError:
-                print('Please enter an integer')
-                failed=1
-                continue
-            
-            if element=='year':
-                if res_int<100:
-                    print('Note: assuming that this was just the last 2 digits of the year')
-                    year=res_int+2000
-                elif res_int<2007:
-                    print('Please enter a gig date after the group was formed')
-                    failed=1
-                elif res_int>datetime.datetime.now().year+2:
-                    print('Please enter a year that is less than 2 years in the future')
-                    failed=1
-                else:
-                    year=res
-            elif element=='month':
-                if res_int<1 or res_int>12:
-                    print('Please enter a valid month (1-12)')
-                    failed=1
-                else:
-                    month=res
-            elif element=='day':
-                if res_int<1 or res_int>31:
-                    print('please enter a valid day (1-31)')
-                    failed=1
-                else:
-                    day=res
-                
 
-
-gig_name=input('Please enter the gig name:')
-    
-gig_name=gig_name+'_'+month+'_'+day+'_'+year
-# gig_name="test"
+gig_name="test"
         
 var_names.append('Notes')       
 df = pandas.DataFrame(ordered_output_list,columns=var_names)
