@@ -11,7 +11,7 @@ import pandas
 import numpy 
 import os
 import datetime
-folder=r"C:\Users\David\OneDrive\Documents\Personal\second_shift"
+folder=r"C:\Users\David\OneDrive\Documents\Personal\second_shift\Set List Automation\Data"
 file_path=folder+os.path.sep+"Set Lists.xlsx"
 
 
@@ -31,6 +31,7 @@ while failed==1:
     failed=0
     print('while')
     missing_people_str=input("Please provide a list of missing members:")
+    # missing_people_str=""  
     print(missing_people_str)
     print('got here')
     missing_people=[i for i in missing_people_str.split(', ') if len(i)>0]
@@ -41,7 +42,7 @@ while failed==1:
             if missing_people[index] not in all_name_set:
                 print('Error: "'+person+'" is not a current group member. If this was a typo, please re-type the missing person list. If '+person+' is actually in the group, please add them to the text file here: '+all_person_path )
                 failed=1  
-                
+       
 print('Available group members: '+", ".join(list(all_name_set-set(missing_people))))
 
 for index, person in enumerate(missing_people):
@@ -64,6 +65,7 @@ class Song:
         self.alternate_role_dict={}
         self.empty_roles=[]
         self.note_list=[]
+        self.eligible_next_songs=[]
         
     def __str__(self):
         print('\n\nsong',self.name)
@@ -77,6 +79,13 @@ class Song:
             for person in role.person_list:
                 print(person)
         return 'Song Object: '+self.name
+    
+    def get_role(self,role_name):
+        if role_name in self.role_dict:
+            return self.person_dict[self.role_dict[role_name].person_list[0].name]
+        else:
+            return None
+        
     
 class Role:
     def __init__(self,name=""):
@@ -148,10 +157,12 @@ def find_replacement(role):
     return None, None, None
         
         
+good_song_names=[]
 good_songs=[]
 bad_songs=[]   
 output_list_good=[]
-output_list_bad=[]  
+output_list_bad=[]
+output_lookup_good={}
 order=0       
 print('got here3')
 for row in lol:#[3:4]:
@@ -280,12 +291,94 @@ for row in lol:#[3:4]:
         bad_songs.append(song.name)
         output_list_bad.append(row_list)
     else:
-        good_songs.append(song.name)
+        good_song_names.append(song.name)
+        good_songs.append(song)
         output_list_good.append(row_list)
+        output_lookup_good[song.name]=row_list
         
+for song1 in good_songs:
+    ineligible_solo_part_list=['solo1','solo2','vp']
+    ineligible_solo_list=[song1.get_role(part).name for part in ineligible_solo_part_list if song1.get_role(part) is not None]
+    ineligible_vp_part_list=['vp']
+    ineligible_vp_list=[song1.get_role(part).name for part in ineligible_vp_part_list if song1.get_role(part) is not None]
+    for song2 in good_songs:
+        solo_part_list=['solo1','solo2']
+        solo_list=[song2.get_role(part).name for part in solo_part_list if song2.get_role(part) is not None]
+        vp_part_list=['vp']
+        vp_list=[song2.get_role(part).name for part in vp_part_list if song2.get_role(part) is not None]
+        problem=False
+        for solo in solo_list:
+            if solo in ineligible_solo_list:
+                problem=True
+        
+        for vp in vp_list:
+            if vp in ineligible_vp_list:
+                problem=True
+            
+        if problem==False:
+            song1.eligible_next_songs.append(song2)
+            
+remaining_song_dict={}
+for song in good_songs:
+    remaining_song_dict[song.name]=song
+def get_next_song(current_song,remaining_song_dict):
+    next_song=None
+    for possible_song in current_song.eligible_next_songs:
+        # if 'tanding' in possible_song.name:
+            # print("here!!!",current_song.name,':',possible_song.name)
+        if possible_song.name in remaining_song_dict:
+            if len(remaining_song_dict)==1:
+                # print('lala',possible_song.name)
+                return [possible_song,current_song]
+            else:
+                next_song_dict=remaining_song_dict.copy()
+                del next_song_dict[possible_song.name]
+                next_return=get_next_song(possible_song,next_song_dict)
+                if next_return is None:
+                    continue
+                else:
+                    # print(current_song.name)
+                    next_return.append(current_song)
+                    # print([s.name for s in next_return])
+                    return next_return
+            
+    if next_song is None:
+        return None
+   
+for song in good_songs:
+    print('\n\n\n\nsong!!:',song.name)
+    next_song_dict=remaining_song_dict.copy()
+    del next_song_dict[song.name]
+    set_list=get_next_song(song,next_song_dict)
+
+    
+    if set_list is not None:
+        print('\n\n\nSet List:(',len(set_list),')',set_list)
+        break
+    
+if set_list is None:
+    print('Warning: cannot be put in order')
+    ordered_output_list=output_list_good
+else:
+    set_list.reverse()
+    print('missing: ',set([s.name for s in good_songs])-set([s.name for s in set_list]))
+    ordered_output_list=[output_lookup_good[song.name] for song in set_list]
+
+    
+    
+  
+# for song in good_songs:
+#     print('\n\n\n',song.name)
+#     print([s.name for s in song.eligible_next_songs])
+            
+
+
+
+        
+
 print()        
         
-print('Available Songs (',len(good_songs),' total):',good_songs)   
+print('Available Songs (',len(good_song_names),' total):',good_song_names)   
 print('Unavailable Songs (',len(bad_songs),' total):',bad_songs)        
 for element in ['year','month','day']:
     failed=1
@@ -333,12 +426,14 @@ for element in ['year','month','day']:
                     day=res
                 
 
+
 gig_name=input('Please enter the gig name:')
     
-gig_name=gig_name+'_'+month+'_'+day+'_'+year
+gig_name="gig_name+'_'+month+'_'+day+'_'+year"
+# gig_name="test"
         
 var_names.append('Notes')       
-df = pandas.DataFrame(output_list_good,columns=var_names)
+df = pandas.DataFrame(ordered_output_list,columns=var_names)
 writer = pandas.ExcelWriter(folder+os.path.sep+gig_name+'.xlsx', engine='xlsxwriter')
 df.to_excel(writer, sheet_name='Songs', index=False)
 writer.save()
