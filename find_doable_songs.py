@@ -31,7 +31,7 @@ while failed==1:
     failed=0
     print('while')
     missing_people_str=input("Please provide a list of missing members:")
-    # missing_people_str=""  
+    # missing_people_str="belen, kristin, ellie"  
     print(missing_people_str)
     print('got here')
     missing_people=[i for i in missing_people_str.split(', ') if len(i)>0]
@@ -44,6 +44,9 @@ while failed==1:
                 failed=1  
        
 print('Available group members: '+", ".join(list(all_name_set-set(missing_people))))
+
+song_delete_list=['wings','dance with me tonight']
+song_delete_list=[w.lower() for w in song_delete_list]
 
 for index, person in enumerate(missing_people):
     missing_people[index]=clean_name(person)
@@ -165,8 +168,10 @@ output_list_bad=[]
 output_lookup_good={}
 order=0       
 print('got here3')
-for row in lol:#[3:4]:
 
+lol=[r for r in lol if r[1].lower() not in song_delete_list]
+print(len(lol))
+for row in lol:#[3:4]:
 # =============================================================================
 #     this is the pre-processing to create the initial objects in the right place. 
 # =============================================================================
@@ -346,7 +351,6 @@ def get_next_song(current_song,remaining_song_dict):
         return None
    
 for song in good_songs:
-    print('\n\n\n\nsong!!:',song.name)
     next_song_dict=remaining_song_dict.copy()
     del next_song_dict[song.name]
     set_list=get_next_song(song,next_song_dict)
@@ -360,8 +364,8 @@ if set_list is None:
     print('Warning: cannot be put in order')
     ordered_output_list=output_list_good
 else:
+    print('ordering successful!')
     set_list.reverse()
-    print('missing: ',set([s.name for s in good_songs])-set([s.name for s in set_list]))
     ordered_output_list=[output_lookup_good[song.name] for song in set_list]
 
     
@@ -444,6 +448,7 @@ writer = pandas.ExcelWriter(folder+os.path.sep+gig_name+'_unavailable_songs.xlsx
 df.to_excel(writer, sheet_name='Songs', index=False)
 writer.save()
 writer.close()
+
 
         
 
