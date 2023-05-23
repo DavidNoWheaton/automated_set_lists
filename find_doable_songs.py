@@ -30,7 +30,7 @@ print('ran this')
 while failed==1:
     failed=0
     print('while')
-    missing_people_str="jason, ellie"  
+    missing_people_str=""  
     print(missing_people_str)
     print('got here')
     missing_people=[i for i in missing_people_str.split(', ') if len(i)>0]
@@ -46,7 +46,7 @@ print('Available group members: '+", ".join(list(all_name_set-set(missing_people
 
 song_delete_list=[]
 num_songs_needed=8
-break_list=[3,7]
+break_list=[]
 song_delete_list=[w.lower() for w in song_delete_list]
 
 for index, person in enumerate(missing_people):
@@ -303,6 +303,25 @@ for row in lol:#[3:4]:
         output_list_good.append(row_list)
         output_lookup_good[song.name]=row_list
         
+# =============================================================================
+# Get list of manually eliminated orderings
+# =============================================================================
+
+ban_lookup={}
+
+with open(folder+os.path.sep+'banned_orderings.txt','r') as file:
+    for f in file:
+        f_split=f.strip().split('|')
+        if f_split[0].lower() not in ban_lookup:
+            ban_lookup[f_split[0].lower()]=[f_split[1].lower()]
+        else:
+            ban_lookup[f_split[0].lower()].append(f_split[1].lower())
+            
+print(ban_lookup)
+
+# =============================================================================
+# this part gets a list of eligible next songs for each song
+# =============================================================================
 for song1 in good_songs:
     ineligible_solo_part_list=['solo1','solo2','vp']
     ineligible_solo_list=[song1.get_role(part).name for part in ineligible_solo_part_list if song1.get_role(part) is not None]
@@ -314,6 +333,11 @@ for song1 in good_songs:
         vp_part_list=['vp']
         vp_list=[song2.get_role(part).name for part in vp_part_list if song2.get_role(part) is not None]
         problem=False
+        #checks to see if a combination has is on the manual banned_orderings list
+        if song1.name.lower() in ban_lookup:
+            if song2.name.lower() in ban_lookup[song1.name.lower()]:
+                problem=True
+                print(song1.name,':::',song2.name)
         for solo in solo_list:
             if solo in ineligible_solo_list:
                 problem=True
@@ -325,10 +349,15 @@ for song1 in good_songs:
         if problem==False:
             song1.eligible_next_songs.append(song2)
             
+    print(song1.name,':',song1.eligible_next_songs)
+            
 remaining_song_dict={}
 for song in good_songs:
     remaining_song_dict[song.name]=song
     
+# =============================================================================
+#     This is used to recursively search for set list orderings that work
+# =============================================================================
 def get_next_song(current_song,remaining_song_dict,num_leftover_songs=None, song_count=None, break_list=None, good_songs=None):
     next_song=None
     if song_count not in break_list:
@@ -351,10 +380,12 @@ def get_next_song(current_song,remaining_song_dict,num_leftover_songs=None, song
                     next_return.append(current_song)
                     # print([s.name for s in next_return])
                     return next_return
-            
-    if next_song is None:
-        return None
+
+    return None
     
+# =============================================================================
+# Recursively find a set list ordering that works, if possible
+# =============================================================================
 if len(good_songs)>=num_songs_needed:  
     num_leftover_songs=len(good_songs)-num_songs_needed
     for song in good_songs:
@@ -410,7 +441,6 @@ if len(good_songs)>num_songs_needed:
     ordered_output_list.append(break_row)
     index+=1
     for song in ordered_output_list:
-        print(song[1])
         used_set.add(song[1])
         
     for song in output_list_good:
