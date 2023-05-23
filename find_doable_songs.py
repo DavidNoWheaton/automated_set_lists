@@ -31,7 +31,7 @@ while failed==1:
     failed=0
     print('while')
     missing_people_str=input("Please provide a list of missing members:")
-    # missing_people_str="belen, kristin, ellie"  
+    # missing_people_str="jason, ellie"  
     print(missing_people_str)
     print('got here')
     missing_people=[i for i in missing_people_str.split(', ') if len(i)>0]
@@ -45,7 +45,9 @@ while failed==1:
        
 print('Available group members: '+", ".join(list(all_name_set-set(missing_people))))
 
-song_delete_list=['wings','dance with me tonight']
+song_delete_list=[]
+num_songs_needed=10
+break_list=[]
 song_delete_list=[w.lower() for w in song_delete_list]
 
 for index, person in enumerate(missing_people):
@@ -70,17 +72,18 @@ class Song:
         self.note_list=[]
         self.eligible_next_songs=[]
         
-    def __str__(self):
+    def __str__(self, verbose=0):
         print('\n\nsong',self.name)
-        for person_name in self.person_dict:
-            person=self.person_dict[person_name]
-            print(person,person.role_list)
-            
-        for role_name in self.role_dict:
-            role=self.role_dict[role_name]
-            print(role)
-            for person in role.person_list:
-                print(person)
+        if verbose==1:
+            for person_name in self.person_dict:
+                person=self.person_dict[person_name]
+                print(person,person.role_list)
+                
+            for role_name in self.role_dict:
+                role=self.role_dict[role_name]
+                print(role)
+                for person in role.person_list:
+                    print(person)
         return 'Song Object: '+self.name
     
     def get_role(self,role_name):
@@ -326,19 +329,22 @@ for song1 in good_songs:
 remaining_song_dict={}
 for song in good_songs:
     remaining_song_dict[song.name]=song
-def get_next_song(current_song,remaining_song_dict):
+    
+def get_next_song(current_song,remaining_song_dict,num_leftover_songs=None, song_count=None, break_list=None, good_songs=None):
     next_song=None
-    for possible_song in current_song.eligible_next_songs:
-        # if 'tanding' in possible_song.name:
-            # print("here!!!",current_song.name,':',possible_song.name)
+    if song_count not in break_list:
+        eligible_next_songs=current_song.eligible_next_songs
+    else:
+        eligible_next_songs=good_songs
+    for possible_song in eligible_next_songs:
         if possible_song.name in remaining_song_dict:
-            if len(remaining_song_dict)==1:
+            if len(remaining_song_dict)==1+num_leftover_songs:
                 # print('lala',possible_song.name)
                 return [possible_song,current_song]
             else:
                 next_song_dict=remaining_song_dict.copy()
                 del next_song_dict[possible_song.name]
-                next_return=get_next_song(possible_song,next_song_dict)
+                next_return=get_next_song(possible_song,next_song_dict,num_leftover_songs=num_leftover_songs, song_count=song_count+1, break_list=break_list, good_songs=good_songs)
                 if next_return is None:
                     continue
                 else:
@@ -349,19 +355,25 @@ def get_next_song(current_song,remaining_song_dict):
             
     if next_song is None:
         return None
-   
-for song in good_songs:
-    next_song_dict=remaining_song_dict.copy()
-    del next_song_dict[song.name]
-    set_list=get_next_song(song,next_song_dict)
-
     
-    if set_list is not None:
-        print('\n\n\nSet List:(',len(set_list),')',set_list)
-        break
+if len(good_songs)>=num_songs_needed:  
+    num_leftover_songs=len(good_songs)-num_songs_needed
+    for song in good_songs:
+        next_song_dict=remaining_song_dict.copy()
+        del next_song_dict[song.name]
+        set_list=get_next_song(song,next_song_dict,num_leftover_songs=num_leftover_songs,song_count=1, break_list=break_list, good_songs=good_songs)
+    
+        
+        if set_list is not None:
+            print('\n\n\nSet List:(',len(set_list),')',set_list)
+            break
+    if set_list is None:
+        print('Warning: cannot be put in order')
+else:
+    set_list=None
+    print('Warning: not enough valid songs to make the desired set list')
     
 if set_list is None:
-    print('Warning: cannot be put in order')
     ordered_output_list=output_list_good
 else:
     print('ordering successful!')
@@ -433,7 +445,7 @@ for element in ['year','month','day']:
 
 gig_name=input('Please enter the gig name:')
     
-gig_name="gig_name+'_'+month+'_'+day+'_'+year"
+gig_name=gig_name+'_'+month+'_'+day+'_'+year
 # gig_name="test"
         
 var_names.append('Notes')       
