@@ -29,7 +29,7 @@ with open(all_person_path,'r') as file:
 failed=1
 while failed==1:
     failed=0
-    missing_people_str="ellie, kristin, freddy, amitha"  
+    missing_people_str="ellie, belen, lilly"  
     missing_people=[i for i in missing_people_str.split(', ') if len(i)>0]
     
     if len(missing_people)>0:
@@ -42,8 +42,8 @@ while failed==1:
 print('Available group members: '+", ".join(list(all_name_set-set(missing_people))))
 
 song_delete_list=[]
-num_songs_needed=8
-break_list=[4]
+num_songs_needed=9
+break_list=[5]
 break_list=[b+1 for b in break_list]
 song_delete_list=[w.lower() for w in song_delete_list]
 
@@ -338,17 +338,18 @@ for song in good_songs:
 # =============================================================================
 #     This is used to recursively search for set list orderings that work
 # =============================================================================
-def get_next_song(current_song,remaining_song_dict,num_leftover_songs=None, song_count=None, break_list=None, good_songs=None):
+def get_next_song(current_song,remaining_song_dict,num_leftover_songs=None, song_count=None, break_list=None, good_songs=None,retired_songs=False):
     next_song=None
     if song_count-1 not in break_list:
         eligible_next_songs=current_song.eligible_next_songs
     else:
         eligible_next_songs=good_songs
-    
+    if retired_songs==False:
+        eligible_next_songs=[e for e in eligible_next_songs if e.song_type != 'retired']    
     eligible_next_songs_sort=[]
     for song in eligible_next_songs:
         eligible_next_songs_sort.append([song,song.song_type+str(random.uniform(0,1))])
-        
+
     eligible_next_songs_sort.sort(key = lambda x: x[1])
     for possible_song in eligible_next_songs_sort:
         possible_song=possible_song[0]
@@ -358,7 +359,7 @@ def get_next_song(current_song,remaining_song_dict,num_leftover_songs=None, song
             else:
                 next_song_dict=remaining_song_dict.copy()
                 del next_song_dict[possible_song.name]
-                next_return=get_next_song(possible_song,next_song_dict,num_leftover_songs=num_leftover_songs, song_count=song_count+1, break_list=break_list, good_songs=good_songs)
+                next_return=get_next_song(possible_song,next_song_dict,num_leftover_songs=num_leftover_songs, song_count=song_count+1, break_list=break_list, good_songs=good_songs, retired_songs=retired_songs)
                 if next_return is None:
                     continue
                 else:
@@ -376,6 +377,8 @@ if len(good_songs)>=num_songs_needed:
         next_song_dict=remaining_song_dict.copy()
         del next_song_dict[song.name]
         set_list=get_next_song(song,next_song_dict,num_leftover_songs=num_leftover_songs,song_count=1, break_list=break_list, good_songs=good_songs)
+        if set_list is None:
+            set_list=get_next_song(song,next_song_dict,num_leftover_songs=num_leftover_songs,song_count=1, break_list=break_list, good_songs=good_songs,retired_songs=True)
     
         
         if set_list is not None:
