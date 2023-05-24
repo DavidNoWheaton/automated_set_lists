@@ -29,7 +29,7 @@ with open(all_person_path,'r') as file:
 failed=1
 while failed==1:
     failed=0
-    missing_people_str="ellie, belen, david, lilly, corey"  
+    missing_people_str="ellie, kristin, freddy, amitha"  
     missing_people=[i for i in missing_people_str.split(', ') if len(i)>0]
     
     if len(missing_people)>0:
@@ -42,8 +42,8 @@ while failed==1:
 print('Available group members: '+", ".join(list(all_name_set-set(missing_people))))
 
 song_delete_list=[]
-num_songs_needed=9
-break_list=[5]
+num_songs_needed=8
+break_list=[4]
 break_list=[b+1 for b in break_list]
 song_delete_list=[w.lower() for w in song_delete_list]
 
@@ -340,7 +340,7 @@ for song in good_songs:
 # =============================================================================
 def get_next_song(current_song,remaining_song_dict,num_leftover_songs=None, song_count=None, break_list=None, good_songs=None):
     next_song=None
-    if song_count not in break_list:
+    if song_count-1 not in break_list:
         eligible_next_songs=current_song.eligible_next_songs
     else:
         eligible_next_songs=good_songs
@@ -366,7 +366,6 @@ def get_next_song(current_song,remaining_song_dict,num_leftover_songs=None, song
                     return next_return
 
     return None
-    
 
 # =============================================================================
 # Recursively find a set list ordering that works, if possible
