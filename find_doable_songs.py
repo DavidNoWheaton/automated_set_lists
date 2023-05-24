@@ -11,6 +11,7 @@ import pandas
 import numpy 
 import os
 import datetime
+import random
 folder=r"C:\Users\David\OneDrive\Documents\Personal\second_shift\Set List Automation\Data"
 file_path=folder+os.path.sep+"Set Lists.xlsx"
 
@@ -56,13 +57,15 @@ df=pandas.read_excel(file_path)
 
 var_names = df.columns.values.tolist()
 
+
+
 lol=df.values.tolist()
 
 print('got here2')
     
 class Song:
     
-    def __init__(self,name=""):
+    def __init__(self,name="",song_type="Standard"):
         self.name=name
         self.person_dict={}
         self.role_dict={}
@@ -70,6 +73,7 @@ class Song:
         self.empty_roles=[]
         self.note_list=[]
         self.eligible_next_songs=[]
+        self.song_type=song_type
         
     def __str__(self, verbose=0):
         print('\n\nsong',self.name)
@@ -177,12 +181,13 @@ for row in lol:#[3:4]:
 # =============================================================================
 #     this is the pre-processing to create the initial objects in the right place. 
 # =============================================================================
-    song=Song(name=row[1])
+    song=Song(name=row[1],song_type=row[2])
     song_list.append(song)
     print('got here5')
     print('\n\n',song.name)
     #these have to be separate for loops to avoid creating multiple person objects for a single person
-    for i in range(2,len(var_names)):
+    start_row_index=3
+    for i in range(start_row_index,len(var_names)):
         role_name=clean_role_name(var_names[i])
         val=row[i]
         if 'alternate' not in role_name:
@@ -215,7 +220,7 @@ for row in lol:#[3:4]:
     if len(all_only)>0:
         raise Exception('ERROR: '+song.name+' did not include at least one group member: '+str(all_only)+'. If these member(s) are not part of the group, please remove them from the current group list at '+all_person_path+'.')
     #these have to be separate for loops to avoid creating multiple person objects for a single person                
-    for i in range(2,len(var_names)):  
+    for i in range(start_row_index,len(var_names)):  
         role_name=var_names[i].lower().strip().replace(' ','')
         val=row[i]
         if 'alternate' in role_name:
@@ -271,7 +276,7 @@ for row in lol:#[3:4]:
         
     if bad==0:
         order+=1
-    row_list=[str(order),song.name]
+    row_list=[str(order),song.name,song.song_type]
     
     for var_name in var_names:
         var_name_clean=clean_role_name(var_name)
@@ -289,7 +294,7 @@ for row in lol:#[3:4]:
         elif var_name_clean in song.empty_roles:
             row_list.append('N/A')
         else:
-            if var_name not in ['Order','Song']:
+            if var_name not in ['Order','Song','Type']:
                 print('ERROR: there was a variable name that somehow did not end up in the objects')
                 print(var_name)
     
@@ -364,7 +369,15 @@ def get_next_song(current_song,remaining_song_dict,num_leftover_songs=None, song
         eligible_next_songs=current_song.eligible_next_songs
     else:
         eligible_next_songs=good_songs
-    for possible_song in eligible_next_songs:
+    
+    eligible_next_songs_sort=[]
+    for song in eligible_next_songs:
+        eligible_next_songs_sort.append([song,song.song_type+str(random.uniform(0,1))])
+        
+    eligible_next_songs_sort.sort(key = lambda x: x[1])
+    print('here:',eligible_next_songs_sort)
+    for possible_song in eligible_next_songs_sort:
+        possible_song=possible_song[0]
         if possible_song.name in remaining_song_dict:
             if len(remaining_song_dict)==1+num_leftover_songs:
                 # print('lala',possible_song.name)
@@ -461,7 +474,8 @@ print('Unavailable Songs (',len(bad_songs),' total):',bad_songs)
 
 gig_name="test"
         
-var_names.append('Notes')       
+var_names.append('Notes')      
+
 df = pandas.DataFrame(ordered_output_list,columns=var_names)
 writer = pandas.ExcelWriter(folder+os.path.sep+gig_name+'.xlsx', engine='xlsxwriter')
 df.to_excel(writer, sheet_name='Songs', index=False)
