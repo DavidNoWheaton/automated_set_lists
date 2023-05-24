@@ -27,13 +27,9 @@ with open(all_person_path,'r') as file:
     for f in file:
         all_name_set=set([clean_name(name) for name in f.split(', ')])
 failed=1
-print('ran this')
 while failed==1:
     failed=0
-    print('while')
-    missing_people_str=""  
-    print(missing_people_str)
-    print('got here')
+    missing_people_str="ellie, belen, david, lilly, corey"  
     missing_people=[i for i in missing_people_str.split(', ') if len(i)>0]
     
     if len(missing_people)>0:
@@ -46,8 +42,9 @@ while failed==1:
 print('Available group members: '+", ".join(list(all_name_set-set(missing_people))))
 
 song_delete_list=[]
-num_songs_needed=8
-break_list=[]
+num_songs_needed=9
+break_list=[5]
+break_list=[b+1 for b in break_list]
 song_delete_list=[w.lower() for w in song_delete_list]
 
 for index, person in enumerate(missing_people):
@@ -57,11 +54,7 @@ df=pandas.read_excel(file_path)
 
 var_names = df.columns.values.tolist()
 
-
-
 lol=df.values.tolist()
-
-print('got here2')
     
 class Song:
     
@@ -75,18 +68,7 @@ class Song:
         self.eligible_next_songs=[]
         self.song_type=song_type
         
-    def __str__(self, verbose=0):
-        print('\n\nsong',self.name)
-        if verbose==1:
-            for person_name in self.person_dict:
-                person=self.person_dict[person_name]
-                print(person,person.role_list)
-                
-            for role_name in self.role_dict:
-                role=self.role_dict[role_name]
-                print(role)
-                for person in role.person_list:
-                    print(person)
+    def __str__(self):
         return 'Song Object: '+self.name
     
     def get_role(self,role_name):
@@ -173,18 +155,15 @@ output_list_good=[]
 output_list_bad=[]
 output_lookup_good={}
 order=0       
-print('got here3')
 
 lol=[r for r in lol if r[1].lower() not in song_delete_list]
-print(len(lol))
 for row in lol:#[3:4]:
 # =============================================================================
 #     this is the pre-processing to create the initial objects in the right place. 
 # =============================================================================
     song=Song(name=row[1],song_type=row[2])
     song_list.append(song)
-    print('got here5')
-    print('\n\n',song.name)
+    print('\n',song.name)
     #these have to be separate for loops to avoid creating multiple person objects for a single person
     start_row_index=3
     for i in range(start_row_index,len(var_names)):
@@ -322,7 +301,6 @@ with open(folder+os.path.sep+'banned_orderings.txt','r') as file:
         else:
             ban_lookup[f_split[0].lower()].append(f_split[1].lower())
             
-print(ban_lookup)
 
 # =============================================================================
 # this part gets a list of eligible next songs for each song
@@ -342,7 +320,6 @@ for song1 in good_songs:
         if song1.name.lower() in ban_lookup:
             if song2.name.lower() in ban_lookup[song1.name.lower()]:
                 problem=True
-                print(song1.name,':::',song2.name)
         for solo in solo_list:
             if solo in ineligible_solo_list:
                 problem=True
@@ -353,8 +330,6 @@ for song1 in good_songs:
             
         if problem==False:
             song1.eligible_next_songs.append(song2)
-            
-    print(song1.name,':',song1.eligible_next_songs)
             
 remaining_song_dict={}
 for song in good_songs:
@@ -375,12 +350,10 @@ def get_next_song(current_song,remaining_song_dict,num_leftover_songs=None, song
         eligible_next_songs_sort.append([song,song.song_type+str(random.uniform(0,1))])
         
     eligible_next_songs_sort.sort(key = lambda x: x[1])
-    print('here:',eligible_next_songs_sort)
     for possible_song in eligible_next_songs_sort:
         possible_song=possible_song[0]
         if possible_song.name in remaining_song_dict:
             if len(remaining_song_dict)==1+num_leftover_songs:
-                # print('lala',possible_song.name)
                 return [possible_song,current_song]
             else:
                 next_song_dict=remaining_song_dict.copy()
@@ -389,13 +362,12 @@ def get_next_song(current_song,remaining_song_dict,num_leftover_songs=None, song
                 if next_return is None:
                     continue
                 else:
-                    # print(current_song.name)
                     next_return.append(current_song)
-                    # print([s.name for s in next_return])
                     return next_return
 
     return None
     
+
 # =============================================================================
 # Recursively find a set list ordering that works, if possible
 # =============================================================================
