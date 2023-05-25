@@ -388,6 +388,7 @@ def get_next_song(current_song,remaining_song_dict,num_leftover_songs=None, song
 # =============================================================================
 # Recursively find a set list ordering that works, if possible
 # =============================================================================
+print('\n\n\n')
 if len(good_songs)>=num_songs_needed:  
     num_leftover_songs=len(good_songs)-num_songs_needed
     for song in good_songs:
@@ -462,8 +463,9 @@ if len(good_songs)>num_songs_needed:
 print()        
         
 print('Available Songs (',len(good_song_names),' total):',good_song_names)   
+print()
 print('Unavailable Songs (',len(bad_songs),' total):',bad_songs)        
-
+print('\n')
 gig_name="test"
         
 var_names.append('Notes')      
@@ -473,14 +475,14 @@ writer = pandas.ExcelWriter(folder+os.path.sep+gig_name+'.xlsx', engine='xlsxwri
 df.to_excel(writer, sheet_name='Songs', index=False)
 df.to_csv(folder+os.path.sep+gig_name+'.txt', index=False, sep='\t')
 writer.save()
-writer.close()
+# writer.close()
      
 df = pandas.DataFrame(output_list_bad,columns=var_names)
 writer = pandas.ExcelWriter(folder+os.path.sep+gig_name+'_unavailable_songs.xlsx', engine='xlsxwriter')
 df.to_csv(folder+os.path.sep+gig_name+'_unavailable_songs.txt', index=False, sep='\t')
 df.to_excel(writer, sheet_name='Songs', index=False)
 writer.save()
-writer.close()
+# writer.close()
 
 
         
