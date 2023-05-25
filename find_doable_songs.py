@@ -29,7 +29,8 @@ with open(all_person_path,'r') as file:
 failed=1
 while failed==1:
     failed=0
-    missing_people_str="ellie, jason"  
+    missing_people_str="ellie, jason, freddy"  
+    # missing_people_str=""
     missing_people=[i for i in missing_people_str.split(', ') if len(i)>0]
     
     if len(missing_people)>0:
@@ -42,8 +43,8 @@ while failed==1:
 print('Available group members: '+", ".join(list(all_name_set-set(missing_people))))
 
 song_delete_list=[]
-num_songs_needed=8
-break_list=[4]
+num_songs_needed=10
+break_list=[5]
 break_list=[b+1 for b in break_list]
 song_delete_list=[w.lower() for w in song_delete_list]
 
@@ -78,7 +79,9 @@ class Song:
         else:
             return None
         
-    
+def remove_element(lst, element):
+    return [x for x in lst if x != element]    
+
 class Role:
     def __init__(self,name=""):
         self.name=name
@@ -91,6 +94,11 @@ class Role:
         
     def __str__(self):
         return 'Role Object: '+self.name   
+    
+    def remove_alternate(self,person):
+        self.alternate_person_list=remove_element(self.alternate_person_list,person)
+        self.alternate_role.person_list=remove_element(self.alternate_role.person_list,person)
+        person.role_list=remove_element(person.role_list,self.alternate_role)
     
 class Person:
     def __init__(self,name=""):
@@ -125,17 +133,18 @@ def find_replacement(role):
         else:
             solo=0
         if previous_role_num>1 or solo:
+            role.remove_alternate(person)
             return person, previous_role, solo
         else:
             if len(previous_role.alternate_person_list)==0:
                 continue
             else:
                 replacement_person, previous_previous_role, previous_solo=find_replacement(previous_role)
+                
                 if replacement_person is not None:
                     note='Note: replacing '+person.name+' with '+replacement_person.name+' for '+previous_role.name
                     song.num_replacements+=1
                     song.note_list.append(note)
-                    previous_role.alternate_role.person_list.remove(replacement_person)
                     print(note)
                     
                     if previous_solo==1:
@@ -243,7 +252,6 @@ for row in lol:#[3:4]:
                 bad=1
             else:
                 note='Note: replacing '+', '.join(role.missing_person_list)+' with '+replacement_person.name+' for '+role.name
-                role.alternate_role.person_list.remove(replacement_person)
                 song.note_list.append(note)
                 print(note)
                 
@@ -342,15 +350,13 @@ for song in good_songs:
 # =============================================================================
 def get_next_song(current_song,remaining_song_dict,num_leftover_songs=None, song_count=None, break_list=None, good_songs=None,retired_songs=False):
     next_song=None
-    print('\n\nsong:',current_song.name)
     if song_count+1 not in break_list:
         eligible_next_songs=current_song.eligible_next_songs
     else:
         eligible_next_songs=good_songs
     if retired_songs==False:
         eligible_next_songs=[e for e in eligible_next_songs if e.song_type != 'retired']   
-        
-    print([s.name for s in eligible_next_songs])
+
     eligible_next_songs_sort=[]
     for song in eligible_next_songs:
         eligible_next_songs_sort.append([song,song.song_type+'_'+str(song.num_replacements)+'_'+str(random.uniform(0,1))])
@@ -440,10 +446,6 @@ if len(good_songs)>num_songs_needed:
             ordered_output_list.append(song)
             index+=1
             
-            
-        
-    
-
 
 print()        
         
