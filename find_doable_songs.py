@@ -7,13 +7,69 @@ This also doesn't account for if someone is allowed to be alternate for multiple
 
 """
 
+
+
+"""--------------------------------------------------"""
+"""AMITHA SECTION 1 START"""
+"""--------------------------------------------------"""
+import math
 import pandas
-import numpy 
-import os
-import datetime
+
+df_set_list=pandas.read_excel("Set Lists.xlsx")
+songs = df_set_list["Song"].values.tolist()
+song_delete_list = []
+
+df_members = pandas.read_excel("Set Lists.xlsx", sheet_name="Members")
+list_all_names = df_members["Names"].values.tolist()
+members = sorted(list_all_names)
+gui_missing_people = []
+
+def program_run():
+gig_name = gig_entry.get() # Retrieve gig name
+gig_date = str(cal.selection_get()) # Retrieve gig date as string
+missing_people_str = ", ".join(gui_missing_people) # Retrieve missing people as comma-separated string
+num_songs_needed = int(number_of_songs.get()) # Retrieve total # of songs
+num_breaks_needed = int(set_break.get()) # Retrieve # of breaks
+
+set_length = math.ceil(num_songs_needed / (num_breaks_needed+1))  # Calculate largest set length
+remainder = num_songs_needed % (num_breaks_needed+1)  # Check if set lengths are all equal
+tracker = remainder # Create tracker variable for varying set lengths
+
+break_list = []
+current_position = set_length  # Start from the largest set length
+
+for i in range(num_breaks_needed):
+    if remainder > 0: # only if set lenghts are not equal
+        tracker -= 1 # update the tracker
+        if tracker < 0: # if threshold reached
+            current_position -= 1  # Reduce set length by 1 
+    break_list.append(current_position)  # Add the break position to the list
+    current_position += set_length  # Move to the next set length
+"""--------------------------------------------------"""
+"""AMITHA SECTION 1 END"""
+"""--------------------------------------------------"""
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# import pandas
+# import numpy 
+# import os
+# import datetime
 import random
-folder=r"C:\Users\David\OneDrive\Documents\Personal\second_shift\Set List Automation\Data"
-file_path=folder+os.path.sep+"Set Lists.xlsx"
+# folder=r"C:\Users\David\OneDrive\Documents\Personal\second_shift\Set List Automation\Data"
 
 
 
@@ -22,40 +78,34 @@ def clean_name(name):
 
 def clean_role_name(name):
     return name.lower().strip().replace(' ','')
-all_person_path=folder+os.path.sep+'all_people.txt'
-with open(all_person_path,'r') as file:
-    for f in file:
-        all_name_set=set([clean_name(name) for name in f.split(', ')])
-failed=1
-while failed==1:
-    failed=0
-    missing_people_str="ellie, amitha, lilly, belen"  
-    # missing_people_str=""
-    missing_people=[i for i in missing_people_str.split(', ') if len(i)>0]
+# all_person_path=folder+os.path.sep+'all_people.txt'
+# with open(all_person_path,'r') as file:
+#     for f in file:
+#         all_name_set=set([clean_name(name) for name in f.split(', ')])
+all_name_set=set([w.lower() for w in members])
+# failed=1
+# while failed==1:
+#     failed=0
+missing_people=[i for i in missing_people_str.split(', ') if len(i)>0]
     
-    if len(missing_people)>0:
-        for index, person in enumerate(missing_people):
-            missing_people[index]=clean_name(person)
-            if missing_people[index] not in all_name_set:
-                print('Error: "'+person+'" is not a current group member. If this was a typo, please re-type the missing person list. If '+person+' is actually in the group, please add them to the text file here: '+all_person_path )
-                failed=1  
+#     if len(missing_people)>0:
+#         for index, person in enumerate(missing_people):
+#             missing_people[index]=clean_name(person)
+#             if missing_people[index] not in all_name_set:
+#                 print('Error: "'+person+'" is not a current group member. If this was a typo, please re-type the missing person list. If '+person+' is actually in the group, please add them to the text file here: '+all_person_path )
+#                 failed=1  
        
 print('Available group members: '+", ".join(list(all_name_set-set(missing_people))))
 
-song_delete_list=[]
-num_songs_needed=9
-break_list=[5]
 break_list=[b+1 for b in break_list]
-song_delete_list=[w.lower() for w in song_delete_list]
+
 
 for index, person in enumerate(missing_people):
     missing_people[index]=clean_name(person)
 
-df=pandas.read_excel(file_path)
+var_names = df_set_list.columns.values.tolist()
 
-var_names = df.columns.values.tolist()
-
-lol=df.values.tolist()
+lol=df_set_list.values.tolist()
     
 class Song:
     
@@ -192,7 +242,7 @@ for row in lol:#[3:4]:
                     person_name=clean_name(person_name)
                     
                     if person_name not in all_name_set:
-                        raise Exception('ERROR: "'+person_name+'" is either a typo or not a current group member, but was labeled as a '+role.name+' for '+song.name+'. If this is not correct, please add '+person_name+' to '+all_person_path+'.')
+                        raise Exception('ERROR: "'+person_name+'" is either a typo or not a current group member, but was labeled as a '+role.name+' for '+song.name+'. If this is not correct, please add '+person_name+' to the Members tab of the spreadsheet.')
                     if person_name in song.person_dict:
                         raise Exception('ERROR: '+person_name+' appears in both '+role.name+' and '+song.person_dict[person_name].role_list[0].name+' for '+song.name)
                     person=Person(name=person_name)
@@ -210,7 +260,7 @@ for row in lol:#[3:4]:
     all_only=all_name_set-set(song.person_dict)-set(missing_people)
     
     if len(all_only)>0:
-        raise Exception('ERROR: '+song.name+' did not include at least one group member: '+str(all_only)+'. If these member(s) are not part of the group, please remove them from the current group list at '+all_person_path+'.')
+        raise Exception('ERROR: '+song.name+' did not include at least one group member: '+str(all_only)+'. If these member(s) are not part of the group, please remove them from the Members tab of the spreadsheet.')
     #these have to be separate for loops to avoid creating multiple person objects for a single person                
     for i in range(start_row_index,len(var_names)):  
         role_name=var_names[i].lower().strip().replace(' ','')
@@ -305,7 +355,7 @@ for row in lol:#[3:4]:
 
 ban_lookup={}
 
-with open(folder+os.path.sep+'banned_orderings.txt','r') as file:
+with open('banned_orderings.txt','r') as file:
     for f in file:
         f_split=f.strip().split('|')
         if f_split[0].lower() not in ban_lookup:
@@ -356,7 +406,7 @@ def get_next_song(current_song,remaining_song_dict,num_leftover_songs=None, song
     if retired_songs<0:
         return None
         
-    next_song=None
+    # next_song=None
     if song_count+1 not in break_list:
         eligible_next_songs=current_song.eligible_next_songs
     else:
@@ -467,24 +517,141 @@ print('Available Songs (',len(good_song_names),' total):',good_song_names)
 print()
 print('Unavailable Songs (',len(bad_songs),' total):',bad_songs)        
 print('\n')
-gig_name="test"
+# gig_name="test"
         
 var_names.append('Notes')      
 
 df = pandas.DataFrame(ordered_output_list,columns=var_names)
-writer = pandas.ExcelWriter(folder+os.path.sep+gig_name+'.xlsx', engine='xlsxwriter')
+writer = pandas.ExcelWriter(gig_name+gig_date+'.xlsx', engine='xlsxwriter')
 df.to_excel(writer, sheet_name='Songs', index=False)
-df.to_csv(folder+os.path.sep+gig_name+'.txt', index=False, sep='\t')
+df.to_csv(gig_name+'.txt', index=False, sep='\t')
 writer.save()
 # writer.close()
      
 df = pandas.DataFrame(output_list_bad,columns=var_names)
-writer = pandas.ExcelWriter(folder+os.path.sep+gig_name+'_unavailable_songs.xlsx', engine='xlsxwriter')
-df.to_csv(folder+os.path.sep+gig_name+'_unavailable_songs.txt', index=False, sep='\t')
+writer = pandas.ExcelWriter(gig_name+gig_date+'_unavailable_songs.xlsx', engine='xlsxwriter')
+df.to_csv(gig_name+'_unavailable_songs.txt', index=False, sep='\t')
 df.to_excel(writer, sheet_name='Songs', index=False)
 writer.save()
 # writer.close()
 
 
-        
+    
+print(song_delete_list)
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+"""--------------------------------------------------"""
+"""AMITHA SECTION 1 START"""
+"""--------------------------------------------------"""
+from datetime import date
+today = date.today()
+
+from tkcalendar import Calendar
+
+try:
+    import tkinter as tk
+    from tkinter import Checkbutton, IntVar
+except ImportError:
+    import Tkinter as tk
+from functools import partial
+global event_date
+
+
+def remove(index, songs):
+    if var_list_songs[index].get() == 1:
+        song_delete_list.append(songs[index].lower())
+    if (var_list_songs[index].get() == 0) & (songs[index] in (song_delete_list)):
+        song_delete_list.remove(songs[index].lower())
+
+def absent(index, members):
+    if var_list_members[index].get() == 1:
+        gui_missing_people.append(members[index].lower())
+    if (var_list_members[index].get() == 0) & (members[index].lower() in (gui_missing_people)):
+        gui_missing_people.remove(members[index].lower())
+    
+
+
+window = tk.Tk()
+
+frame_gig_specs = tk.Frame()
+tk.Label(frame_gig_specs, text="Enter Gig Name").grid(row=0,column=0)
+tk.Label(frame_gig_specs, text="(no special characters)").grid(row=1,column=0)
+gig_entry = tk.Entry(frame_gig_specs, width = 30)
+gig_entry.grid(row=2,column=0, pady=(0, 20))
+
+tk.Label(frame_gig_specs, text="Select # of songs").grid(row=3,column=0)
+number_of_songs = tk.StringVar(frame_gig_specs)
+set_lengths = list(range(1,21))
+number_of_songs.set(set_lengths[0]) # default value
+number_of_songs_ = tk.OptionMenu(frame_gig_specs, number_of_songs, *set_lengths)
+number_of_songs_.grid(row=4,column=0, pady=(0, 20))
+
+tk.Label(frame_gig_specs, text="Select # of breaks").grid(row=5,column=0)
+set_break = tk.StringVar(frame_gig_specs)
+set_breaks = [1, 2, 3]
+set_break.set(set_breaks[0]) # default value
+set_break_ = tk.OptionMenu(frame_gig_specs, set_break, *set_breaks)
+set_break_.grid(row=6,column=0)
+
+
+
+frame_gig_date = tk.Frame()
+label_b = tk.Label(frame_gig_date, text='Select Event Date').pack()
+cal = Calendar(frame_gig_date, font="Arial 10", selectmode='day',cursor="hand1", 
+               year=today.year, month=today.month, day=today.day)
+cal.pack(fill="both", pady=10)
+
+
+
+frame_missing = tk.Frame()
+tk.Label(frame_missing, text="Select Absent Members").pack(anchor="w")
+
+var_list_members = []
+for index, member in enumerate(members):
+    var_list_members.append(IntVar(value=0))
+    Checkbutton(frame_missing, variable=var_list_members[index],
+                text=members[index], command=partial(absent, index, members)).pack(anchor="w")
+
+
+frame_remove = tk.Frame()
+tk.Label(frame_remove, text="Select Songs to Remove").pack(anchor="w")
+
+var_list_songs = []
+for index, song in enumerate(songs):
+    var_list_songs.append(IntVar(value=0))
+    Checkbutton(frame_remove, variable=var_list_songs[index],
+                text=songs[index], command=partial(remove, index, songs)).pack(anchor="w")
+
+
+frame_run = tk.Frame()
+button_run = tk.Button(frame_run, text="Run", command=program_run)
+button_run.pack(pady=10)
+
+frame_gig_specs.grid(row=0,column=0, sticky = "n", padx=(10))
+frame_gig_date.grid(row=0,column=1, padx=(0, 10))
+frame_missing.grid(row=3,column=0, sticky = "n")
+frame_remove.grid(row=3,column=1, sticky = "n")
+frame_run.grid(row=4,column=0, sticky = "w", padx=(10, 0))
+
+
+window.mainloop()
+
+"""--------------------------------------------------"""
+"""AMITHA SECTION 2 END"""
+"""--------------------------------------------------"""
