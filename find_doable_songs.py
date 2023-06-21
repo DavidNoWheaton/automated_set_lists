@@ -49,52 +49,19 @@ def program_run():
     """AMITHA SECTION 1 END"""
     """--------------------------------------------------"""
     
-        
     
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    # import pandas
-    # import numpy 
-    # import os
-    # import datetime
-    import random
-    # folder=r"C:\Users\David\OneDrive\Documents\Personal\second_shift\Set List Automation\Data"
-    
-    
+    import random    
     
     def clean_name(name):
         return name.lower().strip()
     
     def clean_role_name(name):
         return name.lower().strip().replace(' ','')
-    # all_person_path=folder+os.path.sep+'all_people.txt'
-    # with open(all_person_path,'r') as file:
-    #     for f in file:
-    #         all_name_set=set([clean_name(name) for name in f.split(', ')])
+
     all_name_set=set([w.lower() for w in members])
-    # failed=1
-    # while failed==1:
-    #     failed=0
+
     missing_people=[i for i in missing_people_str.split(', ') if len(i)>0]
-        
-    #     if len(missing_people)>0:
-    #         for index, person in enumerate(missing_people):
-    #             missing_people[index]=clean_name(person)
-    #             if missing_people[index] not in all_name_set:
-    #                 print('Error: "'+person+'" is not a current group member. If this was a typo, please re-type the missing person list. If '+person+' is actually in the group, please add them to the text file here: '+all_person_path )
-    #                 failed=1  
-           
+
     print('Available group members: '+", ".join(list(all_name_set-set(missing_people))))
     
     break_list=[b+1 for b in break_list]
@@ -405,8 +372,7 @@ def program_run():
             retired_songs+=-1
         if retired_songs<0:
             return None
-            
-        # next_song=None
+
         if song_count+1 not in break_list:
             eligible_next_songs=current_song.eligible_next_songs
         else:
@@ -517,7 +483,6 @@ def program_run():
     print()
     print('Unavailable Songs (',len(bad_songs),' total):',bad_songs)        
     print('\n')
-    # gig_name="test"
             
     var_names.append('Notes')      
     
@@ -538,22 +503,6 @@ def program_run():
     
         
     print(song_delete_list)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 """--------------------------------------------------"""
