@@ -14,12 +14,29 @@ This also doesn't account for if someone is allowed to be alternate for multiple
 """--------------------------------------------------"""
 import math
 import pandas
+import os
+
+# =============================================================================
+# Get list of manually eliminated orderings
+# =============================================================================
+
 
 df_set_list=pandas.read_excel("Set Lists.xlsx")
 songs = df_set_list["Song"].values.tolist()
 song_delete_list = []
 
 df_members = pandas.read_excel("Set Lists.xlsx", sheet_name="Members")
+df_banned_orderings = pandas.read_excel("Set Lists.xlsx", sheet_name="Banned Orderings")
+
+ban_lookup={}
+for index, row in df_banned_orderings.iterrows():
+    song1=row['Song1'].lower()
+    song2=row['Song2'].lower()
+    if song1 in ban_lookup:
+        ban_lookup[song1].append(song2)
+    else:
+        ban_lookup[song1]=[song2]
+        
 list_all_names = df_members["Names"].values.tolist()
 members = sorted(list_all_names)
 gui_missing_people = []
@@ -315,20 +332,6 @@ def program_run():
             good_songs.append(song)
             output_list_good.append(row_list)
             output_lookup_good[song.name]=row_list
-            
-    # =============================================================================
-    # Get list of manually eliminated orderings
-    # =============================================================================
-    
-    ban_lookup={}
-    
-    with open('banned_orderings.txt','r') as file:
-        for f in file:
-            f_split=f.strip().split('|')
-            if f_split[0].lower() not in ban_lookup:
-                ban_lookup[f_split[0].lower()]=[f_split[1].lower()]
-            else:
-                ban_lookup[f_split[0].lower()].append(f_split[1].lower())
                 
     
     # =============================================================================
@@ -487,14 +490,17 @@ def program_run():
     var_names.append('Notes')      
     
     df = pandas.DataFrame(ordered_output_list,columns=var_names)
-    writer = pandas.ExcelWriter(gig_name+gig_date+'.xlsx', engine='xlsxwriter')
+    output_folder=os.getcwd()+os.path.sep+'sets'
+    if os.path.exists(output_folder)==0:
+        os.makedirs(output_folder)
+    writer = pandas.ExcelWriter(output_folder+os.path.sep+gig_name+gig_date+'.xlsx', engine='xlsxwriter')
     df.to_excel(writer, sheet_name='Songs', index=False)
     df.to_csv(gig_name+'.txt', index=False, sep='\t')
     writer.save()
     # writer.close()
          
     df = pandas.DataFrame(output_list_bad,columns=var_names)
-    writer = pandas.ExcelWriter(gig_name+gig_date+'_unavailable_songs.xlsx', engine='xlsxwriter')
+    writer = pandas.ExcelWriter(output_folder+os.path.sep+gig_name+gig_date+'_unavailable_songs.xlsx', engine='xlsxwriter')
     df.to_csv(gig_name+'_unavailable_songs.txt', index=False, sep='\t')
     df.to_excel(writer, sheet_name='Songs', index=False)
     writer.save()
@@ -553,7 +559,7 @@ number_of_songs_.grid(row=4,column=0, pady=(0, 20))
 
 tk.Label(frame_gig_specs, text="Select # of breaks").grid(row=5,column=0)
 set_break = tk.StringVar(frame_gig_specs)
-set_breaks = [1, 2, 3]
+set_breaks = [0, 1, 2, 3]
 set_break.set(set_breaks[0]) # default value
 set_break_ = tk.OptionMenu(frame_gig_specs, set_break, *set_breaks)
 set_break_.grid(row=6,column=0)
