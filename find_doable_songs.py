@@ -167,7 +167,8 @@ output_list_bad=[]
 output_lookup_good={}
 order=0       
 
-lol=[r for r in lol if r[1].lower() not in song_delete_list]
+lol=[r for r in lol if isinstance(r[1],str) and r[1].lower() not in song_delete_list]
+
 num_retired_songs=len([r for r in lol if r[2].lower()=='retired'])
 for row in lol:#[3:4]:
 # =============================================================================
