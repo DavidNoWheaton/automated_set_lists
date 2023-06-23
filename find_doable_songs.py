@@ -15,11 +15,14 @@ This also doesn't account for if someone is allowed to be alternate for multiple
 import math
 import pandas
 import os
+import datetime
+from datetime import date
 
 # =============================================================================
 # Get list of manually eliminated orderings
 # =============================================================================
 
+today = date.today()
 
 df_set_list=pandas.read_excel("Set Lists.xlsx")
 songs = df_set_list["Song"].values.tolist()
@@ -40,8 +43,15 @@ for index, row in df_banned_orderings.iterrows():
 list_all_names = df_members["Names"].values.tolist()
 members = sorted(list_all_names)
 gui_missing_people = []
-
+global Notes_list
+    
 def program_run():
+    timenow = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S%z")[0:13] + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S%z")[14:16] + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S%z")[17:19]
+    run_label.config(text = "Running...")
+    
+    Notes_list = []
+    
+    
     gig_name = gig_entry.get() # Retrieve gig name
     gig_date = str(cal.selection_get()) # Retrieve gig date as string
     missing_people_str = ", ".join(gui_missing_people) # Retrieve missing people as comma-separated string
@@ -67,6 +77,30 @@ def program_run():
     """--------------------------------------------------"""
     
     
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     import random    
     
     def clean_name(name):
@@ -79,7 +113,7 @@ def program_run():
 
     missing_people=[i for i in missing_people_str.split(', ') if len(i)>0]
 
-    print('Available group members: '+", ".join(list(all_name_set-set(missing_people))))
+    
     
     break_list=[b+1 for b in break_list]
     
@@ -159,7 +193,8 @@ def program_run():
             if len(previous_role_list)>1:
                 for role_temp in previous_role_list:
                     if 'solo' not in role_temp.name.lower():
-                        raise Exception('Error: multiple previous roles for a replacement person. This should not happen.')                   
+                        raise Exception('Error: multiple previous roles for a replacement person. This should not happen.')  
+                        Notes_list.append('\nError: multiple previous roles for a replacement person. This should not happen.')
             previous_role=previous_role_list[0]
             previous_role_num=len(previous_role.person_list)
             if 'solo' in role.name.lower() and 'solo' in previous_role.name.lower():
@@ -176,10 +211,10 @@ def program_run():
                     replacement_person, previous_previous_role, previous_solo=find_replacement(previous_role)
                     
                     if replacement_person is not None:
-                        note='Note: replacing '+person.name+' with '+replacement_person.name+' for '+previous_role.name
+                        note="\n" + song.name + 'Note: replacing '+person.name+' with '+replacement_person.name+' for '+previous_role.name
                         song.num_replacements+=1
                         song.note_list.append(note)
-                        print(note)
+                        Notes_list.append(note)
                         
                         if previous_solo==1:
                             
@@ -191,6 +226,7 @@ def program_run():
                             previous_previous_role.person_list.remove(replacement_person)
                         return person, previous_role, 0
         return None, None, None
+    
             
             
     good_song_names=[]
@@ -210,7 +246,6 @@ def program_run():
     # =============================================================================
         song=Song(name=row[1],song_type=row[2])
         song_list.append(song)
-        print('\n',song.name)
         #these have to be separate for loops to avoid creating multiple person objects for a single person
         start_row_index=3
         for i in range(start_row_index,len(var_names)):
@@ -227,8 +262,10 @@ def program_run():
                         
                         if person_name not in all_name_set:
                             raise Exception('ERROR: "'+person_name+'" is either a typo or not a current group member, but was labeled as a '+role.name+' for '+song.name+'. If this is not correct, please add '+person_name+' to the Members tab of the spreadsheet.')
+                            Notes_list.append('\nERROR: "'+person_name+'" is either a typo or not a current group member, but was labeled as a '+role.name+' for '+song.name+'. If this is not correct, please add '+person_name+' to the Members tab of the spreadsheet.')
                         if person_name in song.person_dict:
                             raise Exception('ERROR: '+person_name+' appears in both '+role.name+' and '+song.person_dict[person_name].role_list[0].name+' for '+song.name)
+                            Notes_list.append('\nERROR: '+person_name+' appears in both '+role.name+' and '+song.person_dict[person_name].role_list[0].name+' for '+song.name)
                         person=Person(name=person_name)
                         person.song=song
                         person.role_list.append(role)
@@ -245,6 +282,7 @@ def program_run():
         
         if len(all_only)>0:
             raise Exception('ERROR: '+song.name+' did not include at least one group member: '+str(all_only)+'. If these member(s) are not part of the group, please remove them from the Members tab of the spreadsheet.')
+            Notes_list.append('\nERROR: '+song.name+' did not include at least one group member: '+str(all_only)+'. If these member(s) are not part of the group, please remove them from the Members tab of the spreadsheet.')
         #these have to be separate for loops to avoid creating multiple person objects for a single person                
         for i in range(start_row_index,len(var_names)):  
             role_name=var_names[i].lower().strip().replace(' ','')
@@ -269,7 +307,7 @@ def program_run():
                             
                 else:
                     song.empty_roles.append(role_name) 
-                            
+    
     
     # =============================================================================
     #     This part begins the core processing
@@ -282,14 +320,14 @@ def program_run():
             if len(role.person_list)==0:
                 replacement_person, previous_role, solo=find_replacement(role)
                 if replacement_person is None:
-                    note='Failed because it could not find a replacement for '+', '.join(role.missing_person_list)+' for '+role.name
-                    print(note)
+                    note=song.name +' failed because it could not find a replacement for '+', '.join(role.missing_person_list)+' for '+role.name
+                    Notes_list.append("\n"+note)
                     song.note_list.append(note)
                     bad=1
                 else:
-                    note='Note: replacing '+', '.join(role.missing_person_list)+' with '+replacement_person.name+' for '+role.name
+                    note=song.name + ' note: replacing '+', '.join(role.missing_person_list)+' with '+replacement_person.name+' for '+role.name
+                    Notes_list.append("\n"+note)
                     song.note_list.append(note)
-                    print(note)
                     
                     if solo==1:
                         replacement_person.role_list.append(role)
@@ -320,15 +358,14 @@ def program_run():
                 row_list.append('N/A')
             else:
                 if var_name not in ['Order','Song','Type']:
-                    print('ERROR: there was a variable name that somehow did not end up in the objects')
-                    print(var_name)
+                    Notes_list.append('\nERROR: there was a variable name ' + var_name + ' that somehow did not end up in the objects')
         
         row_list.append(". ".join(song.note_list))
         if bad==1:
-            bad_songs.append(song.name)
+            bad_songs.append("\n"+song.name)
             output_list_bad.append(row_list)
         else:
-            good_song_names.append(song.name)
+            good_song_names.append("\n"+song.name)
             good_songs.append(song)
             output_list_good.append(row_list)
             output_lookup_good[song.name]=row_list
@@ -408,7 +445,6 @@ def program_run():
     # =============================================================================
     # Recursively find a set list ordering that works, if possible
     # =============================================================================
-    print('\n\n\n')
     if len(good_songs)>=num_songs_needed:  
         num_leftover_songs=len(good_songs)-num_songs_needed
         for song in good_songs:
@@ -422,21 +458,22 @@ def program_run():
                         break
                     
             if i>0 and set_list is not None:
-                print('Warning: used',i,'retired song(s)!')
+                Notes_list.append('\n\nWarning: used '+str(i)+' retired song(s)!')
         
             
             if set_list is not None:
                 break
         if set_list is None:
-            print('Warning: cannot be put in order')
+            Notes_list.append('\nWarning: songs cannot be put in order')
     else:
         set_list=None
-        print('Warning: not enough valid songs to make the desired set list')
+        Notes_list.append('\nWarning: not enough valid songs to make the desired set list')
         
     if set_list is None:
         ordered_output_list=output_list_good
+        run_label.config(text = 'ordering failed')
     else:
-        print('ordering successful!')
+        run_label.config(text = 'ordering successful!')
         set_list.reverse()
         ordered_output_list=[]
         index=1
@@ -478,19 +515,19 @@ def program_run():
                 song[0]=index
                 ordered_output_list.append(song)
                 index+=1
+    
                 
     
-    print()        
-            
-    print('Available Songs (',len(good_song_names),' total):',good_song_names)   
-    print()
-    print('Unavailable Songs (',len(bad_songs),' total):',bad_songs)        
-    print('\n')
-            
+    label_songs_available.config(justify="left", text = 'Available Songs ('+ str(len(good_song_names))+' total):'+ ''.join(good_song_names))
+    label_notes.config(justify="left", text = ''.join(Notes_list))
+    label_songs_unavailable.config(justify="left", text = '\nUnavailable Songs ('+str(len(bad_songs))+' total):'+''.join(bad_songs))
+    
+    
+    
     var_names.append('Notes')      
     
     df = pandas.DataFrame(ordered_output_list,columns=var_names)
-    output_folder=os.getcwd()+os.path.sep+'sets'
+    output_folder=os.getcwd()+os.path.sep+gig_name + " " + timenow
     if os.path.exists(output_folder)==0:
         os.makedirs(output_folder)
     writer = pandas.ExcelWriter(output_folder+os.path.sep+gig_name+gig_date+'.xlsx', engine='xlsxwriter')
@@ -508,15 +545,46 @@ def program_run():
     
     
         
-    print(song_delete_list)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 """--------------------------------------------------"""
-"""AMITHA SECTION 1 START"""
+"""AMITHA SECTION 2 START"""
 """--------------------------------------------------"""
-from datetime import date
-today = date.today()
-
 from tkcalendar import Calendar
 
 try:
@@ -531,7 +599,7 @@ global event_date
 def remove(index, songs):
     if var_list_songs[index].get() == 1:
         song_delete_list.append(songs[index].lower())
-    if (var_list_songs[index].get() == 0) & (songs[index] in (song_delete_list)):
+    if (var_list_songs[index].get() == 0) & (songs[index].lower() in (song_delete_list)):
         song_delete_list.remove(songs[index].lower())
 
 def absent(index, members):
@@ -548,16 +616,17 @@ frame_gig_specs = tk.Frame()
 tk.Label(frame_gig_specs, text="Enter Gig Name").grid(row=0,column=0)
 tk.Label(frame_gig_specs, text="(no special characters)").grid(row=1,column=0)
 gig_entry = tk.Entry(frame_gig_specs, width = 30)
-gig_entry.grid(row=2,column=0, pady=(0, 20))
+gig_entry.insert(-1, "SAMPLE")
+gig_entry.grid(row=2,column=0, pady=(0, 0))
 
-tk.Label(frame_gig_specs, text="Select # of songs").grid(row=3,column=0)
+tk.Label(frame_gig_specs, text="Select # of songs").grid(row=3,column=0, pady=(20, 0))
 number_of_songs = tk.StringVar(frame_gig_specs)
 set_lengths = list(range(1,21))
 number_of_songs.set(set_lengths[0]) # default value
 number_of_songs_ = tk.OptionMenu(frame_gig_specs, number_of_songs, *set_lengths)
-number_of_songs_.grid(row=4,column=0, pady=(0, 20))
+number_of_songs_.grid(row=4,column=0)
 
-tk.Label(frame_gig_specs, text="Select # of breaks").grid(row=5,column=0)
+tk.Label(frame_gig_specs, text="Select # of breaks").grid(row=5,column=0, pady=(20, 0))
 set_break = tk.StringVar(frame_gig_specs)
 set_breaks = [0, 1, 2, 3]
 set_break.set(set_breaks[0]) # default value
@@ -570,40 +639,59 @@ frame_gig_date = tk.Frame()
 label_b = tk.Label(frame_gig_date, text='Select Event Date').pack()
 cal = Calendar(frame_gig_date, font="Arial 10", selectmode='day',cursor="hand1", 
                year=today.year, month=today.month, day=today.day)
-cal.pack(fill="both", pady=10)
+cal.pack(fill="both", pady=0)
 
 
 
 frame_missing = tk.Frame()
-tk.Label(frame_missing, text="Select Absent Members").pack(anchor="w")
+tk.Label(frame_missing, text="Select Absent Members").pack(anchor="nw")
 
 var_list_members = []
 for index, member in enumerate(members):
     var_list_members.append(IntVar(value=0))
     Checkbutton(frame_missing, variable=var_list_members[index],
-                text=members[index], command=partial(absent, index, members)).pack(anchor="w")
+                text=members[index], command=partial(absent, index, members)).pack(anchor="nw")
 
 
 frame_remove = tk.Frame()
-tk.Label(frame_remove, text="Select Songs to Remove").pack(anchor="w")
+tk.Label(frame_remove, text="Select Songs to Remove").pack(anchor="nw")
 
 var_list_songs = []
 for index, song in enumerate(songs):
     var_list_songs.append(IntVar(value=0))
     Checkbutton(frame_remove, variable=var_list_songs[index],
-                text=songs[index], command=partial(remove, index, songs)).pack(anchor="w")
+                text=songs[index], command=partial(remove, index, songs)).pack(anchor="nw")
 
 
 frame_run = tk.Frame()
 button_run = tk.Button(frame_run, text="Run", command=program_run)
-button_run.pack(pady=10)
+button_run.pack(pady=(0, 0))
 
-frame_gig_specs.grid(row=0,column=0, sticky = "n", padx=(10))
-frame_gig_date.grid(row=0,column=1, padx=(0, 10))
-frame_missing.grid(row=3,column=0, sticky = "n")
-frame_remove.grid(row=3,column=1, sticky = "n")
-frame_run.grid(row=4,column=0, sticky = "w", padx=(10, 0))
+frame_run_text = tk.Frame()
+run_label = tk.Label(frame_run_text, text="(Click to run)")
+run_label.pack(pady=(0, 0))
 
+frame_songs_available = tk.Frame()
+label_songs_available = tk.Label(frame_songs_available, text="")
+label_songs_available.pack(anchor="nw", pady=(0, 0))
+
+frame_notes_and_unavailable = tk.Frame()
+label_notes = tk.Label(frame_notes_and_unavailable, text="")
+label_notes.pack(anchor="nw", pady=(0, 0))
+label_songs_unavailable = tk.Label(frame_notes_and_unavailable, text="")
+label_songs_unavailable.pack(anchor="nw", pady=(0, 0))
+
+
+
+frame_gig_specs.grid(row=0,column=0, sticky = "nw", padx=(5, 0))
+frame_gig_date.grid(row=0,column=1, padx=(5), pady=(0,5))
+frame_missing.grid(row=1,column=0, sticky = "nw")
+frame_remove.grid(row=1,column=1, sticky = "nw")
+frame_run.grid(row=2,column=0, sticky = "nw", padx=(5,0))
+frame_run_text.grid(row=3,column=0, sticky = "nw")
+
+frame_songs_available.grid(row=0,column=2, sticky = "nw", padx=(0, 0))
+frame_notes_and_unavailable.grid(row=1,column=2, sticky = "nw", padx=(0, 5))
 
 window.mainloop()
 
