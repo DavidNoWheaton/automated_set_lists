@@ -135,8 +135,12 @@ def program_run():
             self.empty_roles=[]
             self.note_list=[]
             self.eligible_next_songs=[]
+            self.eligible_next_sa_tb=[]
             self.song_type=song_type
             self.num_replacements=0
+            self.can_precede_break=False
+            #to keep track of whether the sa/tb songs have been used
+            self.used='unknown'
             
         def __str__(self):
             return 'Song Object: '+self.name
@@ -234,6 +238,7 @@ def program_run():
     bad_songs=[]   
     output_list_good=[]
     output_list_bad=[]
+    sa_tb_songs=[]
     output_lookup_good={}
     order=0       
     
@@ -366,7 +371,10 @@ def program_run():
             output_list_bad.append(row_list)
         else:
             good_song_names.append("\n"+song.name)
-            good_songs.append(song)
+            if song.song_type in ['tb','sa']:
+                sa_tb_songs.append(song)
+            else:
+                good_songs.append(song)
             output_list_good.append(row_list)
             output_lookup_good[song.name]=row_list
                 
@@ -379,7 +387,7 @@ def program_run():
         ineligible_solo_list=[song1.get_role(part).name for part in ineligible_solo_part_list if song1.get_role(part) is not None]
         ineligible_vp_part_list=['vp']
         ineligible_vp_list=[song1.get_role(part).name for part in ineligible_vp_part_list if song1.get_role(part) is not None]
-        for song2 in good_songs:
+        for song2 in good_songs+sa_tb_songs:
             solo_part_list=['solo1','solo2']
             solo_list=[song2.get_role(part).name for part in solo_part_list if song2.get_role(part) is not None]
             vp_part_list=['vp']
@@ -398,7 +406,10 @@ def program_run():
                     problem=True
                 
             if problem==False:
-                song1.eligible_next_songs.append(song2)
+                if song2.song_type=='tb':
+                    song1.can_precede_break=True
+                elif song2.song_type!='sa':
+                    song1.eligible_next_songs.append(song2)
                 
     remaining_song_dict={}
     for song in good_songs:
@@ -407,16 +418,23 @@ def program_run():
     # =============================================================================
     #     This is used to recursively search for set list orderings that work
     # =============================================================================
-    def get_next_song(current_song,remaining_song_dict,num_leftover_songs=None, song_count=None, break_list=None, good_songs=None,retired_songs=0):
+    def get_next_song(current_song,remaining_song_dict,num_leftover_songs=None, song_count=None, break_list=None, good_songs=None, sa_tb_songs=None, retired_songs=0):
         if current_song.song_type=='retired':
             retired_songs+=-1
         if retired_songs<0:
             return None
-
+        
+        first_sa_tb=False
         if song_count+1 not in break_list:
             eligible_next_songs=current_song.eligible_next_songs
+            
         else:
             eligible_next_songs=good_songs
+            if len(sa_tb_songs)>=2 and sa_tb_songs[0].used != True:
+                first_sa_tb=True
+                num_leftover_songs+=2
+                for song_temp in sa_tb_songs:
+                    song_temp.used=True
         if retired_songs==0:
             eligible_next_songs=[e for e in eligible_next_songs if e.song_type.lower() != 'retired']   
     
@@ -426,19 +444,33 @@ def program_run():
     
         eligible_next_songs_sort.sort(key = lambda x: x[1])
         for possible_song in eligible_next_songs_sort:
+
+            
             possible_song=possible_song[0]
             if possible_song.name in remaining_song_dict:
-                if len(remaining_song_dict)==1+num_leftover_songs:
-                    return [possible_song,current_song]
+                temp_diff=len(remaining_song_dict)-1-num_leftover_songs
+                if temp_diff<=0:
+                    if temp_diff==0:
+                        next_return=[possible_song,current_song]
+                    else:
+                        next_return=[current_song]
+                    if first_sa_tb==True:
+                        next_return+=sa_tb_songs
+                        
+                    return next_return
                 else:
                     next_song_dict=remaining_song_dict.copy()
                     del next_song_dict[possible_song.name]
     
-                    next_return=get_next_song(possible_song,next_song_dict,num_leftover_songs=num_leftover_songs, song_count=song_count+1, break_list=break_list, good_songs=good_songs, retired_songs=retired_songs)
+                    next_return=get_next_song(possible_song,next_song_dict,num_leftover_songs=num_leftover_songs, song_count=song_count+1, break_list=break_list, good_songs=good_songs, sa_tb_songs=sa_tb_songs, retired_songs=retired_songs)
                     if next_return is None:
                         continue
                     else:
                         next_return.append(current_song)
+                        if first_sa_tb==True:
+                            next_return+=sa_tb_songs
+                            
+                            
                         return next_return
     
         return None
@@ -453,7 +485,7 @@ def program_run():
             set_list=None
             for i in range(num_retired_songs+1):
                 if set_list is None:
-                    set_list=get_next_song(song,next_song_dict,num_leftover_songs=num_leftover_songs,song_count=1, break_list=break_list, good_songs=good_songs,retired_songs=i)
+                    set_list=get_next_song(song,next_song_dict,num_leftover_songs=num_leftover_songs,song_count=1, break_list=break_list, good_songs=good_songs, sa_tb_songs=sa_tb_songs, retired_songs=i)
                     if set_list is not None:
                         break
                     
@@ -477,13 +509,14 @@ def program_run():
         set_list.reverse()
         ordered_output_list=[]
         index=1
+        song_index=1
         for song in set_list:
             row=output_lookup_good[song.name]
             row[0]=index
             ordered_output_list.append(row)
             index+=1
-            if index in break_list:
-                
+            song_index+=1
+            if song_index in break_list and (len(sa_tb_songs)<2 or song_index>break_list[0]):
                 break_row=[]
                 for element in row:
                     break_row.append('---')
@@ -530,7 +563,7 @@ def program_run():
     output_folder=os.getcwd()+os.path.sep+gig_name + " " + timenow
     if os.path.exists(output_folder)==0:
         os.makedirs(output_folder)
-    writer = pandas.ExcelWriter(output_folder+os.path.sep+gig_name+gig_date+'.xlsx', engine='xlsxwriter')
+    writer = pandas.ExcelWriter(output_folder+os.path.sep+gig_name+gig_date+ " " + timenow+'.xlsx', engine='xlsxwriter')
     df.to_excel(writer, sheet_name='Songs', index=False)
     df.to_csv(output_folder+os.path.sep+gig_name+'.txt', index=False, sep='\t')
     writer.save()
