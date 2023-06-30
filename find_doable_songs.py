@@ -24,13 +24,35 @@ from datetime import date
 
 today = date.today()
 
-df_set_list=pandas.read_excel("Set Lists.xlsx")
+
+"https://docs.google.com/spreadsheets/d/1z1c632UCyPgrChQjbOFAwJdHVgKyJd1oi2c7-TGCJt0/edit?usp=sharing"
+
+SHEET_ID = '1z1c632UCyPgrChQjbOFAwJdHVgKyJd1oi2c7-TGCJt0'
+SHEET_NAME_Songs = 'Songs'
+SHEET_NAME_Members = 'Members'
+SHEET_NAME_Orderings = 'Banned_Orderings'
+url_Songs = f'https://docs.google.com/spreadsheets/d/{SHEET_ID}/gviz/tq?tqx=out:csv&sheet={SHEET_NAME_Songs}'
+url_Members = f'https://docs.google.com/spreadsheets/d/{SHEET_ID}/gviz/tq?tqx=out:csv&sheet={SHEET_NAME_Members}'
+url_Orderings = f'https://docs.google.com/spreadsheets/d/{SHEET_ID}/gviz/tq?tqx=out:csv&sheet={SHEET_NAME_Orderings}'
+
+
+df_set_list = pandas.read_csv(url_Songs)
+df_members = pandas.read_csv(url_Members)
+df_banned_orderings = pandas.read_csv(url_Orderings)
+
+
+
+# df_set_list=pandas.read_excel("Set Lists.xlsx")
+# df_members = pandas.read_excel("Set Lists.xlsx", sheet_name="Members")
+# df_banned_orderings = pandas.read_excel("Set Lists.xlsx", sheet_name="Banned Orderings")
+
+
+
+
+
+
 songs = df_set_list["Song"].values.tolist()
 song_delete_list = []
-
-df_members = pandas.read_excel("Set Lists.xlsx", sheet_name="Members")
-df_banned_orderings = pandas.read_excel("Set Lists.xlsx", sheet_name="Banned Orderings")
-
 ban_lookup={}
 for index, row in df_banned_orderings.iterrows():
     song1=row['Song1'].lower()
