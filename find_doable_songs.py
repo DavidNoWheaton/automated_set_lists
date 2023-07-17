@@ -53,14 +53,14 @@ df_banned_orderings = pandas.read_csv(url_Orderings)
 
 songs = df_set_list["Song"].values.tolist()
 song_delete_list = []
-ban_lookup={}
+banned_ordering_lookup={}
 for index, row in df_banned_orderings.iterrows():
     song1=row['Song1'].lower()
     song2=row['Song2'].lower()
-    if song1 in ban_lookup:
-        ban_lookup[song1].append(song2)
+    if song1 in banned_ordering_lookup:
+        banned_ordering_lookup[song1].append(song2)
     else:
-        ban_lookup[song1]=[song2]
+        banned_ordering_lookup[song1]=[song2]
         
 list_all_names = df_members["Names"].values.tolist()
 members = sorted(list_all_names)
@@ -416,8 +416,8 @@ def program_run():
             vp_list=[song2.get_role(part).name for part in vp_part_list if song2.get_role(part) is not None]
             problem=False
             #checks to see if a combination has is on the manual banned_orderings list
-            if song1.name.lower() in ban_lookup:
-                if song2.name.lower() in ban_lookup[song1.name.lower()]:
+            if song1.name.lower() in banned_ordering_lookup:
+                if song2.name.lower() in banned_ordering_lookup[song1.name.lower()]:
                     problem=True
             for solo in solo_list:
                 if solo in ineligible_solo_list:
