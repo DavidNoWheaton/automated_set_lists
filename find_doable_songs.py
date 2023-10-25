@@ -42,16 +42,8 @@ df_banned_orderings = pandas.read_csv(url_Orderings)
 
 
 
-# df_set_list=pandas.read_excel("Set Lists.xlsx")
-# df_members = pandas.read_excel("Set Lists.xlsx", sheet_name="Members")
-# df_banned_orderings = pandas.read_excel("Set Lists.xlsx", sheet_name="Banned Orderings")
-
-
-
-
-
-
 songs = df_set_list["Song"].values.tolist()
+holiday_repertoire = df_set_list[df_set_list["Type"].isin(["holiday", "current parody"])]["Song"].values.tolist()
 song_delete_list = []
 banned_ordering_lookup={}
 for index, row in df_banned_orderings.iterrows():
@@ -589,14 +581,12 @@ def program_run():
     df.to_excel(writer, sheet_name='Songs', index=False)
     df.to_csv(output_folder+os.path.sep+gig_name+'.txt', index=False, sep='\t')
     writer.save()
-    # writer.close()
          
     df = pandas.DataFrame(output_list_bad,columns=var_names)
     writer = pandas.ExcelWriter(output_folder+os.path.sep+gig_name+gig_date+'_unavailable_songs.xlsx', engine='xlsxwriter')
     df.to_csv(output_folder+os.path.sep+gig_name+'_unavailable_songs.txt', index=False, sep='\t')
     df.to_excel(writer, sheet_name='Songs', index=False)
     writer.save()
-    # writer.close()
     
     
         
@@ -651,7 +641,27 @@ from functools import partial
 global event_date
 
 
-def remove(index, songs):
+
+
+
+
+
+
+def toggle_checkboxes(index, songs):
+    if var_holiday.get() == 1:
+        for song, index in checkbox_var_dict.items():
+            var_list_songs[index].set(1)
+            song_delete_list.append(songs[index].lower())
+    else:
+        for song, index in checkbox_var_dict.items():
+            var_list_songs[index].set(0)
+            song_name = songs[index].lower()
+            if song_name in song_delete_list:
+                song_delete_list.remove(song_name)
+
+
+
+def exclude(index, songs):
     if var_list_songs[index].get() == 1:
         song_delete_list.append(songs[index].lower())
     if (var_list_songs[index].get() == 0) & (songs[index].lower() in (song_delete_list)):
@@ -667,55 +677,70 @@ def absent(index, members):
 
 window = tk.Tk()
 
-frame_gig_specs = tk.Frame()
-tk.Label(frame_gig_specs, text="Enter Gig Name").grid(row=0,column=0)
-tk.Label(frame_gig_specs, text="(no special characters)").grid(row=1,column=0)
-gig_entry = tk.Entry(frame_gig_specs, width = 30)
+
+frame_col_0 = tk.Frame()
+
+tk.Label(frame_col_0, text="Enter Gig Name").grid(row=0,column=0)
+tk.Label(frame_col_0, text="(no special characters)").grid(row=1,column=0)
+gig_entry = tk.Entry(frame_col_0, width = 30)
 gig_entry.insert(-1, "SAMPLE")
 gig_entry.grid(row=2,column=0, pady=(0, 0))
 
-tk.Label(frame_gig_specs, text="Select # of songs").grid(row=3,column=0, pady=(20, 0))
-number_of_songs = tk.StringVar(frame_gig_specs)
+tk.Label(frame_col_0, text='Select Event Date').grid(row=3,column=0, pady=(20, 0))
+cal = Calendar(frame_col_0, font="Arial 10", selectmode='day',cursor="hand1", 
+               year=today.year, month=today.month, day=today.day)
+cal.grid(row=4,column=0)
+
+tk.Label(frame_col_0, text="Select # of songs").grid(row=5,column=0, pady=(20, 0))
+number_of_songs = tk.StringVar(frame_col_0)
 set_lengths = list(range(1,21))
 number_of_songs.set(set_lengths[0]) # default value
-number_of_songs_ = tk.OptionMenu(frame_gig_specs, number_of_songs, *set_lengths)
-number_of_songs_.grid(row=4,column=0)
+number_of_songs_ = tk.OptionMenu(frame_col_0, number_of_songs, *set_lengths)
+number_of_songs_.grid(row=6,column=0)
 
-tk.Label(frame_gig_specs, text="Select # of breaks").grid(row=5,column=0, pady=(20, 0))
-set_break = tk.StringVar(frame_gig_specs)
+tk.Label(frame_col_0, text="Select # of breaks").grid(row=7,column=0, pady=(20, 0))
+set_break = tk.StringVar(frame_col_0)
 set_breaks = [0, 1, 2, 3]
 set_break.set(set_breaks[0]) # default value
-set_break_ = tk.OptionMenu(frame_gig_specs, set_break, *set_breaks)
-set_break_.grid(row=6,column=0)
+set_break_ = tk.OptionMenu(frame_col_0, set_break, *set_breaks)
+set_break_.grid(row=8,column=0)
 
 
 
-frame_gig_date = tk.Frame()
-label_b = tk.Label(frame_gig_date, text='Select Event Date').pack()
-cal = Calendar(frame_gig_date, font="Arial 10", selectmode='day',cursor="hand1", 
-               year=today.year, month=today.month, day=today.day)
-cal.pack(fill="both", pady=0)
 
 
 
-frame_missing = tk.Frame()
-tk.Label(frame_missing, text="Select Absent Members").pack(anchor="nw")
+frame_col_1 = tk.Frame()
+tk.Label(frame_col_1, text="Select Absent Members").pack(anchor="nw")
 
 var_list_members = []
 for index, member in enumerate(members):
     var_list_members.append(IntVar(value=0))
-    Checkbutton(frame_missing, variable=var_list_members[index],
+    Checkbutton(frame_col_1, variable=var_list_members[index],
                 text=members[index], command=partial(absent, index, members)).pack(anchor="nw")
 
 
-frame_remove = tk.Frame()
-tk.Label(frame_remove, text="Select Songs to Remove").pack(anchor="nw")
 
+
+
+frame_col_2 = tk.Frame()
+
+tk.Label(frame_col_2, text="Holiday Gig?").pack(anchor="nw")
+checkbox_var_dict = {}
+var_holiday = IntVar(value=0)
+Checkbutton(frame_col_2, variable=var_holiday,
+            text="Yes", command=lambda index=index, songs=songs:(toggle_checkboxes(index, songs), exclude(index, songs))).pack(anchor="nw")
+
+tk.Label(frame_col_2, text="\nSelect Songs to Remove").pack(anchor="nw")
 var_list_songs = []
 for index, song in enumerate(songs):
     var_list_songs.append(IntVar(value=0))
-    Checkbutton(frame_remove, variable=var_list_songs[index],
-                text=songs[index], command=partial(remove, index, songs)).pack(anchor="nw")
+    Checkbutton(frame_col_2, variable=var_list_songs[index],
+                text=song, command=lambda index=index, songs=songs: exclude(index, songs)).pack(anchor="nw")
+    if song not in holiday_repertoire:
+        checkbox_var_dict[song] = index
+
+
 
 
 frame_run = tk.Frame()
@@ -726,27 +751,30 @@ frame_run_text = tk.Frame()
 run_label = tk.Label(frame_run_text, text="(Click to run)")
 run_label.pack(pady=(0, 0))
 
-frame_songs_available = tk.Frame()
-label_songs_available = tk.Label(frame_songs_available, text="")
+
+
+
+
+
+frame_col_3 = tk.Frame()
+label_songs_available = tk.Label(frame_col_3, text="")
 label_songs_available.pack(anchor="nw", pady=(0, 0))
 
-frame_notes_and_unavailable = tk.Frame()
-label_notes = tk.Label(frame_notes_and_unavailable, text="")
+label_notes = tk.Label(frame_col_3, text="")
 label_notes.pack(anchor="nw", pady=(0, 0))
-label_songs_unavailable = tk.Label(frame_notes_and_unavailable, text="")
+label_songs_unavailable = tk.Label(frame_col_3, text="")
 label_songs_unavailable.pack(anchor="nw", pady=(0, 0))
 
 
 
-frame_gig_specs.grid(row=0,column=0, sticky = "nw", padx=(5, 0))
-frame_gig_date.grid(row=0,column=1, padx=(5), pady=(0,5))
-frame_missing.grid(row=1,column=0, sticky = "nw")
-frame_remove.grid(row=1,column=1, sticky = "nw")
-frame_run.grid(row=2,column=0, sticky = "nw", padx=(5,0))
-frame_run_text.grid(row=3,column=0, sticky = "nw")
+frame_col_0.grid(row=0,column=0, sticky = "nw", padx=(10, 10))
+frame_col_1.grid(row=0,column=1, sticky = "nw", padx=(0, 10))
+frame_col_2.grid(row=0,column=2, sticky = "nw", padx=(0, 10))
+frame_col_3.grid(row=0,column=3, sticky = "nw", padx=(0, 10))
 
-frame_songs_available.grid(row=0,column=2, sticky = "nw", padx=(0, 0))
-frame_notes_and_unavailable.grid(row=1,column=2, sticky = "nw", padx=(0, 5))
+
+frame_run.grid(row=2,column=0, sticky = "nw", padx=(10,10))
+frame_run_text.grid(row=3,column=0, sticky = "nw", padx=(10,10))
 
 window.mainloop()
 
