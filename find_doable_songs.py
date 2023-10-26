@@ -396,6 +396,8 @@ def program_run():
     # =============================================================================
     # this part gets a list of eligible next songs for each song
     # =============================================================================
+    prev_song_type = None
+    
     for song1 in good_songs:
         ineligible_solo_part_list=['solo1','solo2','vp']
         ineligible_solo_list=[song1.get_role(part).name for part in ineligible_solo_part_list if song1.get_role(part) is not None]
@@ -423,7 +425,12 @@ def program_run():
                 if song2.song_type=='tb':
                     song1.can_precede_break=True
                 elif song2.song_type!='sa':
+                    if var_holiday.get() == 1:
+                        # Check if it's a holiday gig and the current and previous songs' types are identical
+                        if prev_song_type == song1.song_type and prev_song_type == song2.song_type:
+                            continue  # Skip this song
                     song1.eligible_next_songs.append(song2)
+        prev_song_type = song1.song_type
                 
     remaining_song_dict={}
     for song in good_songs:
