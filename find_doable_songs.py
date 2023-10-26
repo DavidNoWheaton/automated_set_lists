@@ -581,18 +581,25 @@ def program_run():
     var_names.append('Notes')      
     
     df = pandas.DataFrame(ordered_output_list,columns=var_names)
+    mask = df['Song'] == "Auld Lang Syne"
+    df_without_auld_lang_syne = df[~mask]
+    df_with_auld_lang_syne = df[mask]
+    new_df = pandas.concat([df_without_auld_lang_syne, df_with_auld_lang_syne])
+    new_df.reset_index(drop=True, inplace=True)
+    new_df = new_df.drop("Order", axis=1)
+    
     output_folder=os.getcwd()+os.path.sep+gig_name + " " + timenow
     if os.path.exists(output_folder)==0:
         os.makedirs(output_folder)
-    writer = pandas.ExcelWriter(output_folder+os.path.sep+gig_name+gig_date+ " " + timenow+'.xlsx', engine='xlsxwriter')
-    df.to_excel(writer, sheet_name='Songs', index=False)
-    df.to_csv(output_folder+os.path.sep+gig_name+'.txt', index=False, sep='\t')
+    writer = pandas.ExcelWriter(output_folder+os.path.sep+gig_name+ " " +gig_date+ " " + timenow+'.xlsx', engine='xlsxwriter')
+    new_df.to_excel(writer, sheet_name='Songs', index=False)
+    new_df.to_csv(output_folder+os.path.sep+gig_name+'.txt', index=False, sep='\t')
     writer.save()
          
-    df = pandas.DataFrame(output_list_bad,columns=var_names)
-    writer = pandas.ExcelWriter(output_folder+os.path.sep+gig_name+gig_date+'_unavailable_songs.xlsx', engine='xlsxwriter')
-    df.to_csv(output_folder+os.path.sep+gig_name+'_unavailable_songs.txt', index=False, sep='\t')
-    df.to_excel(writer, sheet_name='Songs', index=False)
+    new_df = pandas.DataFrame(output_list_bad,columns=var_names)
+    writer = pandas.ExcelWriter(output_folder+os.path.sep+gig_name+ " " +gig_date+'_unavailable_songs.xlsx', engine='xlsxwriter')
+    new_df.to_csv(output_folder+os.path.sep+gig_name+'_unavailable_songs.txt', index=False, sep='\t')
+    new_df.to_excel(writer, sheet_name='Songs', index=False)
     writer.save()
     
     
